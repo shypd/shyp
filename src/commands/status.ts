@@ -108,7 +108,6 @@ export async function statusCommand(): Promise<void> {
   if (apps.size === 0 && engines.size === 0) {
     log.dim('\nNo apps or engines configured.')
     log.dim('Add an app:    shyp add <name>')
-    log.dim('Import apps:   shyp import')
   }
 
   console.log()
