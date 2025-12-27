@@ -16,7 +16,7 @@ import {
 program
   .name('shyp')
   .description('Zero friction deployment for Node.js apps')
-  .version('0.1.3')
+  .version('0.1.4')
 
 // shyp status
 program
@@ -59,7 +59,7 @@ program
 // shyp sync
 program
   .command('sync')
-  .description('Apply all configs to PM2 and Nginx')
+  .description('Sync configs, provision SSL certs, reload Nginx')
   .option('-n, --dry-run', 'Show what would be done without making changes')
   .action(syncCommand)
 

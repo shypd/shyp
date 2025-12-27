@@ -93,7 +93,7 @@ landing-page         ● online     3003     45MB       12d 3h       example.com
 | `shyp status` | Show status of all apps |
 | `shyp deploy <name>` | Deploy an app |
 | `shyp add <name>` | Add a new app configuration |
-| `shyp sync` | Apply configs to PM2 + Nginx |
+| `shyp sync` | Sync configs, provision SSL certs, reload Nginx |
 | `shyp ports` | Show port allocations |
 | `shyp logs <name>` | View deployment logs |
 | `shyp doctor` | Check system health |

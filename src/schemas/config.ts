@@ -10,7 +10,7 @@ export const PortRangeSchema = z.object({
 // SSL configuration
 export const SSLConfigSchema = z.object({
   enabled: z.boolean().default(true),
-  email: z.string().email(),
+  email: z.string().email().optional(), // Falls back to contact@{domain}
   auto_renew: z.boolean().default(true),
 })
 

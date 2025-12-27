@@ -1,5 +1,5 @@
 import chalk from 'chalk'
-import { loadAppConfigs, loadEngineConfigs, isInitialized } from '../lib/config.js'
+import { loadAppConfigs, loadEngineConfigs, loadGlobalConfig, isInitialized } from '../lib/config.js'
 import { allocatePort, loadPortAllocations, savePortAllocations } from '../lib/state.js'
 import {
   generateNginxConfig,
@@ -9,6 +9,7 @@ import {
   testNginxConfig,
   reloadNginx,
 } from '../lib/nginx.js'
+import { getCertInfo, obtainCert, isCertbotAvailable } from '../lib/ssl.js'
 import { log } from '../utils/logger.js'
 import { createSpinner } from '../utils/spinner.js'
 
@@ -27,13 +28,20 @@ export async function syncCommand(options: { dryRun?: boolean }): Promise<void> 
     console.log()
   }
 
-  const [apps, engines] = await Promise.all([
+  const [apps, engines, globalConfig] = await Promise.all([
     loadAppConfigs(),
     loadEngineConfigs(),
+    loadGlobalConfig(),
   ])
+
+  // Get SSL email from config (fallback to contact@domain per-domain)
+  const sslEmail = globalConfig?.server?.ssl?.email
 
   // Track what we're doing
   const actions: string[] = []
+
+  // Collect all domains for SSL
+  const domains: string[] = []
 
   // Allocate ports for apps that don't have them
   log.info('Checking port allocations...')
@@ -42,6 +50,43 @@ export async function syncCommand(options: { dryRun?: boolean }): Promise<void> 
       const port = await allocatePort(name, 'standard')
       config.port = port
       actions.push(`Allocated port ${port} for ${name}`)
+    }
+    if (config.domain) {
+      domains.push(config.domain)
+    }
+  }
+
+  // Collect engine module domains
+  for (const [, engine] of engines) {
+    for (const [, moduleConfig] of Object.entries(engine.modules)) {
+      if (moduleConfig.domain) {
+        domains.push(moduleConfig.domain)
+      }
+    }
+  }
+
+  // Provision SSL certs for domains that need them
+  if (domains.length > 0 && !dryRun) {
+    log.info('Checking SSL certificates...')
+    const hasCertbot = await isCertbotAvailable()
+
+    if (hasCertbot) {
+      for (const domain of domains) {
+        const certInfo = await getCertInfo(domain)
+        if (!certInfo.exists) {
+          const spinner = createSpinner(`Obtaining cert for ${domain}...`).start()
+          const result = await obtainCert(domain, sslEmail)
+          if (result.success) {
+            spinner.succeed(`Obtained cert for ${domain}`)
+            actions.push(`Obtained SSL cert for ${domain}`)
+          } else {
+            spinner.fail(`Failed to obtain cert for ${domain}`)
+            log.dim(`  ${result.error}`)
+          }
+        }
+      }
+    } else {
+      log.dim('  certbot not installed - skipping SSL provisioning')
     }
   }
 

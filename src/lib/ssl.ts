@@ -83,3 +83,61 @@ export function formatCertStatus(info: CertInfo): { text: string; color: 'green'
 
   return { text: `${info.daysRemaining}d`, color: 'green' }
 }
+
+export async function isCertbotAvailable(): Promise<boolean> {
+  try {
+    await execa('which', ['certbot'])
+    return true
+  } catch {
+    return false
+  }
+}
+
+export async function obtainCert(domain: string, emailOverride?: string): Promise<{ success: boolean; error?: string }> {
+  const certPath = `${LETSENCRYPT_LIVE}/${domain}/fullchain.pem`
+
+  // Already have cert
+  if (existsSync(certPath)) {
+    return { success: true }
+  }
+
+  // Get email from domain (contact@domain.com)
+  const email = emailOverride || `contact@${domain}`
+
+  try {
+    await execa('certbot', [
+      'certonly',
+      '--nginx',
+      '--non-interactive',
+      '--agree-tos',
+      '--email', email,
+      '-d', domain,
+    ], { stdio: 'inherit' })
+
+    return { success: true }
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to obtain certificate'
+    }
+  }
+}
+
+export async function ensureCerts(domains: string[]): Promise<Map<string, { success: boolean; error?: string }>> {
+  const results = new Map<string, { success: boolean; error?: string }>()
+
+  if (!await isCertbotAvailable()) {
+    for (const domain of domains) {
+      results.set(domain, { success: false, error: 'certbot not installed' })
+    }
+    return results
+  }
+
+  for (const domain of domains) {
+    if (!domain) continue
+    const result = await obtainCert(domain)
+    results.set(domain, result)
+  }
+
+  return results
+}
