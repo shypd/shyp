@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 
 import { program } from 'commander'
+import { readFileSync } from 'fs'
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
 import {
   statusCommand,
   deployCommand,
@@ -13,10 +16,14 @@ import {
   addCommand,
 } from './commands/index.js'
 
+// Read version from package.json
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const pkg = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8'))
+
 program
   .name('shyp')
   .description('Zero friction deployment for Node.js apps')
-  .version('0.1.4')
+  .version(pkg.version)
 
 // shyp status
 program
