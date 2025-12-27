@@ -16,7 +16,7 @@ import {
 program
   .name('shyp')
   .description('Zero friction deployment for Node.js apps')
-  .version('0.1.2')
+  .version('0.1.3')
 
 // shyp status
 program
