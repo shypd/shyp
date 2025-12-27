@@ -110,6 +110,7 @@ export async function obtainCert(domain: string, emailOverride?: string): Promis
       '--nginx',
       '--non-interactive',
       '--agree-tos',
+      '--no-eff-email',
       '--email', email,
       '-d', domain,
     ], { stdio: 'inherit' })

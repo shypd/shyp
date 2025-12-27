@@ -1,6 +1,6 @@
 {
   "name": "shyp",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Zero friction deployment for Node.js apps",
   "author": "shypd",
   "license": "MIT",
@@ -42,6 +42,7 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
+    "@inquirer/prompts": "^7.2.1",
     "chalk": "^5.4.1",
     "commander": "^13.0.0",
     "execa": "^9.5.2",

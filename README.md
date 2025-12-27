@@ -45,6 +45,48 @@
 npm install -g shyp
 ```
 
+## Before You Deploy
+
+Before adding your first app, complete this checklist:
+
+### 1. DNS Configuration
+Point your domain to your server:
+- Create an **A record** pointing `yourdomain.com` → `your-server-ip`
+- Optional: Add a **www** subdomain if needed
+
+### 2. Email Forwarding
+Set up email forwarding for SSL certificate notifications:
+- Create `contact@yourdomain.com` forwarding to your real email
+- This is used by Let's Encrypt for certificate expiry warnings
+
+### 3. GitHub SSH Key
+Ensure your server can pull from GitHub:
+```bash
+# Generate a deploy key (if you haven't already)
+ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_myapp -N ""
+
+# Add the public key to your repo
+cat ~/.ssh/id_ed25519_myapp.pub
+# → GitHub repo → Settings → Deploy keys → Add deploy key
+```
+
+### 4. Webhook Secret (for auto-deploy)
+Generate a shared secret for GitHub webhooks:
+```bash
+# Generate a random secret
+openssl rand -hex 32
+
+# Set it on your server
+export SHYP_WEBHOOK_SECRET=your-generated-secret
+```
+
+Then configure the webhook in GitHub:
+1. Go to your repo → **Settings** → **Webhooks** → **Add webhook**
+2. **Payload URL:** `http://your-server-ip:9000/`
+3. **Content type:** `application/json`
+4. **Secret:** Your `SHYP_WEBHOOK_SECRET`
+5. **Events:** Just the push event
+
 ## Quick Start
 
 ```bash
@@ -209,6 +251,7 @@ shyp deploy new-project
 ## Links
 
 - **Website:** [shyp.now](https://shyp.now)
+- **Documentation:** [shyp.now/docs](https://shyp.now/docs)
 - **GitHub:** [github.com/shypd/shyp](https://github.com/shypd/shyp)
 - **Issues:** [github.com/shypd/shyp/issues](https://github.com/shypd/shyp/issues)
 - **npm:** [npmjs.com/package/shyp](https://www.npmjs.com/package/shyp)
