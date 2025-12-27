@@ -1,0 +1,58 @@
+{
+  "name": "shyp",
+  "version": "0.1.0",
+  "description": "Zero friction deployment for Node.js apps",
+  "author": "shypd",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "shyp": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc -w",
+    "start": "node dist/cli.js",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "deployment",
+    "devops",
+    "pm2",
+    "nginx",
+    "vps",
+    "deploy",
+    "nodejs",
+    "automation",
+    "AI",
+    "zero-friction"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shypd/shyp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/shypd/shyp/issues"
+  },
+  "homepage": "https://shyp.now",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "chalk": "^5.4.1",
+    "commander": "^13.0.0",
+    "execa": "^9.5.2",
+    "express": "^4.21.2",
+    "ora": "^8.1.1",
+    "yaml": "^2.7.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.5",
+    "typescript": "^5.7.2"
+  }
+}
