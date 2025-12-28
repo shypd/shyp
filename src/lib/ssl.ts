@@ -14,14 +14,22 @@ const LETSENCRYPT_LIVE = '/etc/letsencrypt/live'
 export async function getCertInfo(domain: string): Promise<CertInfo> {
   const certPath = `${LETSENCRYPT_LIVE}/${domain}/fullchain.pem`
 
-  if (!existsSync(certPath)) {
-    return { domain, exists: false }
+  // Check if cert exists (may need sudo due to permissions)
+  let certExists = existsSync(certPath)
+  if (!certExists) {
+    try {
+      // Try with sudo for letsencrypt directory permissions
+      await execa('sudo', ['test', '-f', certPath])
+      certExists = true
+    } catch {
+      return { domain, exists: false }
+    }
   }
 
   try {
-    // Use openssl to read cert expiry
-    const { stdout } = await execa('openssl', [
-      'x509', '-enddate', '-noout', '-in', certPath
+    // Use openssl to read cert expiry (with sudo for permissions)
+    const { stdout } = await execa('sudo', [
+      'openssl', 'x509', '-enddate', '-noout', '-in', certPath
     ])
 
     // Parse "notAfter=Mon Dec 27 00:00:00 2025 GMT"
@@ -39,7 +47,7 @@ export async function getCertInfo(domain: string): Promise<CertInfo> {
       }
     }
   } catch {
-    // Cert exists but couldn't read it (permission issue)
+    // Cert exists but couldn't read it
     return { domain, exists: true }
   }
 
@@ -50,7 +58,7 @@ export async function getAllCerts(): Promise<CertInfo[]> {
   const certs: CertInfo[] = []
 
   try {
-    const { stdout } = await execa('ls', [LETSENCRYPT_LIVE])
+    const { stdout } = await execa('sudo', ['ls', LETSENCRYPT_LIVE])
     const domains = stdout.split('\n').filter(d => d && !d.startsWith('README'))
 
     for (const domain of domains) {

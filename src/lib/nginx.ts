@@ -313,19 +313,25 @@ export async function disableNginxConfig(name: string): Promise<void> {
   }
 }
 
-// Test nginx configuration
+// Test nginx configuration (needs sudo for SSL cert access)
 export async function testNginxConfig(): Promise<{ valid: boolean; error?: string }> {
   try {
-    await execa('nginx', ['-t'])
+    await execa('sudo', ['nginx', '-t'])
     return { valid: true }
-  } catch (error: any) {
-    return { valid: false, error: error.stderr || error.message }
+  } catch {
+    // Try with full path
+    try {
+      await execa('sudo', ['/usr/sbin/nginx', '-t'])
+      return { valid: true }
+    } catch (error: any) {
+      return { valid: false, error: error.stderr || error.message }
+    }
   }
 }
 
 // Reload nginx
 export async function reloadNginx(): Promise<void> {
-  await execa('systemctl', ['reload', 'nginx'])
+  await execa('sudo', ['systemctl', 'reload', 'nginx'])
 }
 
 // Check if nginx is available
@@ -334,6 +340,12 @@ export async function isNginxAvailable(): Promise<boolean> {
     await execa('nginx', ['-v'])
     return true
   } catch {
-    return false
+    // Try common Linux path (not always in PATH)
+    try {
+      await execa('/usr/sbin/nginx', ['-v'])
+      return true
+    } catch {
+      return false
+    }
   }
 }
