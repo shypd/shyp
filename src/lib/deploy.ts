@@ -115,9 +115,16 @@ export async function deployApp(config: AppConfig): Promise<DeployResult> {
 
       // Delete old process and start fresh
       await pm2.deleteProcess(pm2Name)
+
+      // Build environment with PORT from config
+      const processEnv: Record<string, string> = { ...config.env }
+      if (config.port) {
+        processEnv.PORT = String(config.port)
+      }
+
       await pm2.startProcess(pm2Name, startCmd, {
         cwd: config.path,
-        env: config.env,
+        env: processEnv,
         instances: config.resources?.instances || 1,
         maxMemory: config.resources?.memory || '512M',
       })

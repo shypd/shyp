@@ -14,6 +14,7 @@ import {
   syncCommand,
   logsCommand,
   addCommand,
+  upCommand,
 } from './commands/index.js'
 
 // Read version from package.json
@@ -87,6 +88,12 @@ program
   .option('-t, --type <type>', 'App type (nextjs, node, static, script)')
   .option('-p, --port <port>', 'Port number')
   .action(addCommand)
+
+// shyp up
+program
+  .command('up')
+  .description('Start all stopped apps')
+  .action(upCommand)
 
 // Parse arguments
 program.parse()
