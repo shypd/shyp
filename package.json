@@ -1,6 +1,6 @@
 {
   "name": "shyp",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Zero friction deployment for Node.js apps",
   "author": "shypd",
   "license": "MIT",
