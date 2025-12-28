@@ -44,15 +44,25 @@ async function runCommand(
 ): Promise<void> {
   log.command(cmd)
 
-  const { stdout, stderr } = await execa('bash', ['-c', cmd], {
+  const result = await execa('bash', ['-c', cmd], {
     cwd: options.cwd,
     env: { ...process.env, ...options.env },
     reject: false,
   })
 
   if (options.logFile) {
-    if (stdout) await logToFile(options.logFile, `STDOUT: ${stdout}`)
-    if (stderr) await logToFile(options.logFile, `STDERR: ${stderr}`)
+    if (result.stdout) await logToFile(options.logFile, `STDOUT: ${result.stdout}`)
+    if (result.stderr) await logToFile(options.logFile, `STDERR: ${result.stderr}`)
+  }
+
+  // Check for command failure
+  if (result.exitCode !== 0) {
+    // Show error output to user
+    if (result.stderr) {
+      log.error('Build output:')
+      console.error(result.stderr)
+    }
+    throw new Error(`Command failed with exit code ${result.exitCode}`)
   }
 }
 
