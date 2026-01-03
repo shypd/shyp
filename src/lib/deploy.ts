@@ -3,6 +3,7 @@ import { mkdir, appendFile } from 'fs/promises'
 import { existsSync } from 'fs'
 import { join, dirname } from 'path'
 import type { AppConfig, EngineConfig, ModuleConfig } from '../schemas/index.js'
+import { RUNTIME_COMMANDS } from '../schemas/app.js'
 import * as git from './git.js'
 import * as pm2 from './pm2.js'
 import { recordDeployment, generateDeploymentId } from './state.js'
@@ -98,8 +99,10 @@ export async function deployApp(config: AppConfig): Promise<DeployResult> {
       await pm2.stopProcess(pm2Name)
     }
 
-    // Run build command
-    const buildCmd = config.build?.command || 'npm ci && npm run build'
+    // Run build command (use runtime-specific default)
+    const runtime = config.runtime || 'npm'
+    const runtimeCmds = RUNTIME_COMMANDS[runtime]
+    const buildCmd = config.build?.command || runtimeCmds.build
     log.step('Building...')
     await runCommand(buildCmd, {
       cwd: config.path,
@@ -119,7 +122,7 @@ export async function deployApp(config: AppConfig): Promise<DeployResult> {
     } else {
       // PM2-based deployment
       const pm2Name = config.pm2?.name || config.name
-      const startCmd = config.start?.command || 'npm start'
+      const startCmd = config.start?.command || runtimeCmds.start
 
       log.step(`Starting ${pm2Name}...`)
 
@@ -199,10 +202,11 @@ export async function deployModule(
   try {
     await logToFile(logFile, `=== Starting module deployment for ${fullName} ===`)
 
-    // Determine module path
-    const modulePath = moduleConfig.subpath
-      ? join(engine.server.path, moduleConfig.subpath)
-      : engine.server.path // Module within engine directory
+    // Determine module path (absolute path takes precedence over subpath)
+    const modulePath = moduleConfig.path
+      ?? (moduleConfig.subpath
+        ? join(engine.server.path, moduleConfig.subpath)
+        : engine.server.path)
 
     // If module has its own repo, clone/pull it
     if (moduleConfig.repo) {
@@ -308,8 +312,12 @@ export async function deployEngine(engine: EngineConfig): Promise<DeployResult> 
     log.step(`Stopping ${pm2Name}...`)
     await pm2.stopProcess(pm2Name)
 
+    // Get runtime-specific commands
+    const engineRuntime = serverConfig.runtime || 'npm'
+    const engineRuntimeCmds = RUNTIME_COMMANDS[engineRuntime]
+
     // Build
-    const buildCmd = serverConfig.build?.command || 'npm ci'
+    const buildCmd = serverConfig.build?.command || engineRuntimeCmds.install
     log.step('Building engine...')
     await runCommand(buildCmd, {
       cwd: serverConfig.path,
@@ -317,7 +325,7 @@ export async function deployEngine(engine: EngineConfig): Promise<DeployResult> 
     })
 
     // Start engine
-    const startCmd = serverConfig.start?.command || 'npm start'
+    const startCmd = serverConfig.start?.command || engineRuntimeCmds.start
     log.step(`Starting ${pm2Name}...`)
     await pm2.deleteProcess(pm2Name)
     await pm2.startProcess(pm2Name, startCmd, {

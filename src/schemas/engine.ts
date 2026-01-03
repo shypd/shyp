@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { DeployModeSchema, NginxConfigSchema, PM2ConfigSchema, HealthConfigSchema } from './app.js'
+import { DeployModeSchema, NginxConfigSchema, PM2ConfigSchema, HealthConfigSchema, RuntimeSchema } from './app.js'
 
 // Module configuration (generic - works for Wyrt, or any modular system)
 export const ModuleConfigSchema = z.object({
@@ -7,7 +7,8 @@ export const ModuleConfigSchema = z.object({
 
   // Source - can be separate repo or subpath of engine repo
   repo: z.string().optional(),
-  subpath: z.string().optional(), // Path within engine directory
+  path: z.string().optional(), // Absolute path to module (overrides subpath)
+  subpath: z.string().optional(), // Path relative to engine directory
   branch: z.string().default('main'),
 
   // Domain mapping
@@ -30,10 +31,13 @@ export const ModuleConfigSchema = z.object({
     timeout: z.number().default(600),
   }).optional(),
 
-  // Start command (for pm2 mode)
+  // Start command (for pm2 mode, default is runtime-dependent)
   start: z.object({
-    command: z.string().default('npm start'),
+    command: z.string().optional(),
   }).optional(),
+
+  // Runtime / package manager
+  runtime: RuntimeSchema,
 
   // Environment
   env: z.record(z.string()).default({}),
@@ -84,13 +88,16 @@ export const EngineServerSchema = z.object({
     module_migrations: z.string().optional(),
   }).optional(),
 
-  // Build & start
+  // Runtime / package manager
+  runtime: RuntimeSchema,
+
+  // Build & start (defaults are runtime-dependent, applied in deploy.ts)
   build: z.object({
-    command: z.string().default('npm ci'),
+    command: z.string().optional(),
   }).optional(),
 
   start: z.object({
-    command: z.string().default('npm start'),
+    command: z.string().optional(),
   }).optional(),
 
   // Health check
