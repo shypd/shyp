@@ -17,6 +17,7 @@ import {
   HEALTH_FILE,
   PORT_RANGES,
 } from '../utils/paths.js'
+import { loadAppConfigs } from './config.js'
 
 // Ensure state directory exists
 async function ensureStateDir(): Promise<void> {
@@ -74,7 +75,7 @@ export async function allocatePort(
 ): Promise<number> {
   const state = await loadPortAllocations()
 
-  // Check if already allocated
+  // Check if already allocated in state
   if (state.allocations[appName]) {
     return state.allocations[appName]
   }
@@ -83,12 +84,25 @@ export async function allocatePort(
   const rangeConfig = state.ranges?.[range] || defaultPortAllocations.ranges![range]
   let port = rangeConfig.next
 
-  // Skip reserved and already allocated ports
+  // Collect all used ports from multiple sources
   const usedPorts = new Set([
     ...Object.values(state.allocations),
     ...state.reserved,
     ...Object.values(state.engine_managed).flat(),
   ])
+
+  // Also check hardcoded ports in app config files
+  // This prevents conflicts with ports defined directly in YAML configs
+  try {
+    const appConfigs = await loadAppConfigs()
+    for (const [name, config] of appConfigs) {
+      if (config.port && name !== appName) {
+        usedPorts.add(config.port)
+      }
+    }
+  } catch {
+    // If we can't load configs, continue with state-based allocation
+  }
 
   while (usedPorts.has(port) && port <= rangeConfig.end) {
     port++
