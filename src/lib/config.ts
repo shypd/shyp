@@ -77,7 +77,8 @@ export async function loadAppConfigs(): Promise<Map<string, AppConfig>> {
       const config = await loadYamlFile(path, parseAppConfig)
       apps.set(config.name, config)
     } catch (error) {
-      console.error(`Failed to load ${file}:`, error)
+      const message = error instanceof Error ? error.message : String(error)
+      console.error(`Failed to load ${file}:`, message)
     }
   }
 
@@ -112,7 +113,8 @@ export async function loadEngineConfigs(): Promise<Map<string, EngineConfig>> {
       const config = await loadYamlFile(path, parseEngineConfig)
       engines.set(config.name, config)
     } catch (error) {
-      console.error(`Failed to load engine ${file}:`, error)
+      const message = error instanceof Error ? error.message : String(error)
+      console.error(`Failed to load engine ${file}:`, message)
     }
   }
 
